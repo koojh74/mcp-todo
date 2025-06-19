@@ -55,7 +55,7 @@ def register(request: Request):
     # 실제 프로덕션에서는, client_id, client_secret 생성 및 반환
     return {
         "client_id": GOOGLE_CLIENT_ID,
-        "client_secret": GOOGLE_CLIENT_SECRET,
+        # "client_secret": GOOGLE_CLIENT_SECRET,
         # "redirect_uris": data.get("/auth/login"),
         # "grant_types": data.get("grant_types"),
         # 기타 필요한 정보 반환
