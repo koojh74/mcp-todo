@@ -1,10 +1,29 @@
 # MCP 기본 종속성
-# mcp>=1.2.0,<2.0.0
-mcp[cli]
-# fastmcp
-# fastmcp>=2.0.0
-# pytz>=2023.3
+# mcp[cli]
+fastmcp
 
 # 웹 서버 종속성
-# uvicorn>=0.22.0
-uvicorn[standard]
+# uvicorn[standard]>=0.22.0
+# fastapi>=0.100.0
+# starlette>=0.37.0
+
+# # Pydantic
+# pydantic>=2.0.0
+# pydantic-settings>=2.0.0
+
+# # OAuth dependencies
+# python-jose[cryptography]>=3.3.0
+# passlib[bcrypt]>=1.7.4
+# python-multipart>=0.0.6
+# httpx>=0.24.0
+# authlib>=1.2.0
+
+# # CLI
+# click>=8.0.0
+
+python-dotenv
+uvicorn
+fastapi
+httpx
+PyJWT
+google-cloud-firestore

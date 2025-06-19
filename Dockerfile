@@ -17,12 +17,15 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY .env .
+
 # 애플리케이션 파일 복사
-COPY main.py .
+COPY todo_main.py .
+COPY todo_mcp.py .
 
 # 포트 노출
 EXPOSE 8080
 
 # 실행 명령어
-CMD ["python", "main.py"]
-# CMD ["uvicorn", "main:mcp", "--host", "0.0.0.0", "--port", "8080"]
+# CMD ["python", "main.py"]
+CMD ["uvicorn", "todo_main:app", "--host", "0.0.0.0", "--port", "8080"]

@@ -56,7 +56,7 @@ except Exception as e:
     db = None
 
 # In-memory storage for todos (user_id -> list of todos) - used as fallback
-# todos_db: Dict[str, List[Dict[str, Any]]] = {}
+todos_db: Dict[str, List[Dict[str, Any]]] = {}
 
 app = FastAPI()
 app.add_middleware(
@@ -260,109 +260,55 @@ def get_todos(ctx: Context) -> List[Dict[str, Any]]:
             return todos
         except Exception as e:
             print(f"Error fetching from Firestore: {e}")
-            raise e
             # Fall back to in-memory
     
     # Use in-memory storage
-    # if user_id not in todos_db:
-    #     todos_db[user_id] = []
+    if user_id not in todos_db:
+        todos_db[user_id] = []
     
-    # return todos_db[user_id]
-    raise Exception("Firestore not available")
+    return todos_db[user_id]
 
 
 @mcp.tool()
-def add_todos(ctx: Context, todo_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Add multiple todo items at once
+def add_todo(ctx: Context, title: str, due_date: Optional[str] = None) -> Dict[str, Any]:
+    """Add a new todo item
     
     Args:
-        todo_items: List of todo items, each containing:
-            - title: The title/description of the todo (required)
-            - due_date: Optional due date in format YYYY-MM-DD
+        title: The title/description of the todo
+        due_date: Optional due date in format YYYY-MM-DD
         
     Returns:
-        List of created todo items
+        The created todo item
     """
     user_id = get_user_id(ctx)
-    created_todos = []
+    
+    # Create new todo
+    new_todo = {
+        "title": title,
+        "completed": False,
+        "created_at": datetime.now().isoformat(),
+        "due_date": due_date
+    }
     
     if db:
         # Use Firestore
         try:
-            user_ref = db.collection('users').document(user_id)
-            todos_collection = user_ref.collection('todos')
-            
-            # Batch write for better performance
-            batch = db.batch()
-            
-            for item in todo_items:
-                # Validate required fields
-                if 'title' not in item:
-                    raise ValueError(f"Missing required field 'title' in todo item")
-                
-                # Create new todo
-                new_todo = {
-                    "title": item['title'],
-                    "completed": False,
-                    "created_at": datetime.now().isoformat(),
-                    "due_date": item.get('due_date', None)  # Optional field
-                }
-                
-                todo_ref = todos_collection.document()
-                batch.set(todo_ref, new_todo)
-                new_todo['id'] = todo_ref.id
-                created_todos.append(new_todo)
-            
-            # Commit batch
-            batch.commit()
-            return created_todos
-            
+            todo_ref = db.collection('users').document(user_id).collection('todos').document()
+            todo_ref.set(new_todo)
+            new_todo['id'] = todo_ref.id
+            return new_todo
         except Exception as e:
             print(f"Error adding to Firestore: {e}")
-            raise e
             # Fall back to in-memory
     
-    raise Exception("Firestore not available")
-
-# def add_todo(ctx: Context, title: str, due_date: Optional[str] = None) -> Dict[str, Any]:
-#     """Add a new todo item
+    # Use in-memory storage
+    if user_id not in todos_db:
+        todos_db[user_id] = []
     
-#     Args:
-#         title: The title/description of the todo
-#         due_date: Optional due date in format YYYY-MM-DD
-        
-#     Returns:
-#         The created todo item
-#     """
-#     user_id = get_user_id(ctx)
+    new_todo["id"] = str(uuid.uuid4())
+    todos_db[user_id].append(new_todo)
     
-#     # Create new todo
-#     new_todo = {
-#         "title": title,
-#         "completed": False,
-#         "created_at": datetime.now().isoformat(),
-#         "due_date": due_date
-#     }
-    
-#     if db:
-#         # Use Firestore
-#         try:
-#             todo_ref = db.collection('users').document(user_id).collection('todos').document()
-#             todo_ref.set(new_todo)
-#             new_todo['id'] = todo_ref.id
-#             return new_todo
-#         except Exception as e:
-#             print(f"Error adding to Firestore: {e}")
-#             # Fall back to in-memory
-    
-#     # Use in-memory storage
-#     if user_id not in todos_db:
-#         todos_db[user_id] = []
-    
-#     new_todo["id"] = str(uuid.uuid4())
-#     todos_db[user_id].append(new_todo)
-    
-#     return new_todo
+    return new_todo
 
 
 @mcp.tool()
@@ -407,21 +353,19 @@ def update_todo(ctx: Context, todo_id: str, title: Optional[str] = None,
             print(f"Error updating in Firestore: {e}")
             if "not found" in str(e):
                 raise
-            raise e
             # Fall back to in-memory
     
     # Use in-memory storage
-    # if user_id not in todos_db:
-    #     raise ValueError("No todos found for user")
+    if user_id not in todos_db:
+        raise ValueError("No todos found for user")
     
-    # # Find the todo
-    # for todo in todos_db[user_id]:
-    #     if todo["id"] == todo_id:
-    #         todo.update(update_data)
-    #         return todo
+    # Find the todo
+    for todo in todos_db[user_id]:
+        if todo["id"] == todo_id:
+            todo.update(update_data)
+            return todo
     
-    # raise ValueError(f"Todo with id {todo_id} not found")
-    raise Exception("Firestore not available")
+    raise ValueError(f"Todo with id {todo_id} not found")
 
 
 @mcp.tool()
@@ -450,23 +394,20 @@ def delete_todo(ctx: Context, todo_id: str) -> Dict[str, str]:
             print(f"Error deleting from Firestore: {e}")
             if "not found" in str(e):
                 raise
-            raise e
             # Fall back to in-memory
     
-    raise Exception("Firestore not available")
-    
     # Use in-memory storage
-    # if user_id not in todos_db:
-    #     raise ValueError("No todos found for user")
+    if user_id not in todos_db:
+        raise ValueError("No todos found for user")
     
-    # # Find and remove the todo
-    # original_length = len(todos_db[user_id])
-    # todos_db[user_id] = [todo for todo in todos_db[user_id] if todo["id"] != todo_id]
+    # Find and remove the todo
+    original_length = len(todos_db[user_id])
+    todos_db[user_id] = [todo for todo in todos_db[user_id] if todo["id"] != todo_id]
     
-    # if len(todos_db[user_id]) == original_length:
-    #     raise ValueError(f"Todo with id {todo_id} not found")
+    if len(todos_db[user_id]) == original_length:
+        raise ValueError(f"Todo with id {todo_id} not found")
     
-    # return {"message": f"Todo {todo_id} deleted successfully"}
+    return {"message": f"Todo {todo_id} deleted successfully"}
 
 
 # def main():

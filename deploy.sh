@@ -2,7 +2,7 @@
 set -e
 
 # 변수 설정
-APP_NAME=my-mcp-server
+APP_NAME=mcp-server-auth-google
 PROJECT_ID=loplat-ai
 REPO_NAME=my-repo
 REGION=asia-northeast3
