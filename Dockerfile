@@ -22,6 +22,7 @@ COPY .env .
 # 애플리케이션 파일 복사
 COPY todo_main.py .
 COPY todo_mcp.py .
+COPY database.py .
 
 # 포트 노출
 EXPOSE 8080

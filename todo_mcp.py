@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from fastmcp import FastMCP, Context
 
 from google.cloud import firestore
+from database import user_db
 
 # Create FastMCP instance
 mcp = FastMCP(
@@ -50,6 +51,12 @@ def get_user_id(ctx):
     payload = jwt.decode(access_token, GOOGLE_CLIENT_SECRET, algorithms=["HS256"])
     user_id = payload['user_id']
     print(f'user_id: {user_id}')
+    
+    # Increment access count for this user
+    try:
+        user_db.increment_access_count(user_id)
+    except Exception as e:
+        print(f"Warning: Could not update access count: {e}")
 
     return user_id
 

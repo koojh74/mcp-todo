@@ -21,6 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import jwt
 
 from todo_mcp import mcp
+from database import user_db
 
 
 # logger = logging.getLogger(__name__)
@@ -112,6 +113,12 @@ async def token(request: Request):
     print(decoded)
 
     google_user_id = decoded['sub']
+    email = decoded.get('email', '')
+    name = decoded.get('name', '')
+    
+    # Save or update user information in database
+    user_data = user_db.get_or_create_user(google_user_id, email, name)
+    # print(f"User {email} logged in, access_count: {user_data['access_count']}")
 
     response = {
         "access_token": jwt.encode({"user_id": google_user_id}, GOOGLE_CLIENT_SECRET, algorithm="HS256"),
