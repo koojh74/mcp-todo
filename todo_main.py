@@ -49,17 +49,35 @@ app.add_middleware(
 app.mount("/mcp", mcp.sse_app())
 
 
+@app.get("/.well-known/oauth-authorization-server")
+def oauth_server(request: Request):
+    # base_url = str(request.base_url).rstrip('/')
+    base_url = 'https://mcp-server-auth-google-822395763299.asia-northeast3.run.app'
+    return {
+        "issuer": base_url,
+        "authorization_endpoint": f"{base_url}/authorize",
+        "token_endpoint": f"{base_url}/token",
+        "registration_endpoint": f"{base_url}/register",
+        "response_types_supported": ["code"],
+        "grant_types_supported": ["authorization_code"],
+        "code_challenge_methods_supported": ["S256"],
+        "token_endpoint_auth_methods_supported": ["client_secret_post"]
+    }
+
+
 @app.post("/register")
-def register(request: Request):
-    data = request.json()
+async def register(request: Request):
+    data = await request.json()
     logging.info(f"Received client registration: {data}")
-    # 실제 프로덕션에서는, client_id, client_secret 생성 및 반환
+    
+    # Return the registered client information
     return {
         "client_id": GOOGLE_CLIENT_ID,
-        # "client_secret": GOOGLE_CLIENT_SECRET,
-        # "redirect_uris": data.get("/auth/login"),
-        # "grant_types": data.get("grant_types"),
-        # 기타 필요한 정보 반환
+        "client_secret": GOOGLE_CLIENT_SECRET,
+        "redirect_uris": data.get("redirect_uris", []),
+        # "grant_types": data.get("grant_types", ["authorization_code"]),
+        # "response_types": data.get("response_types", ["code"]),
+        # "token_endpoint_auth_method": "client_secret_post"
     }
 
 @app.get("/authorize")

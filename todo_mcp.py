@@ -66,7 +66,7 @@ def get_todos(ctx: Context) -> List[Dict[str, Any]]:
     """Get all todos for the authenticated user
     
     Returns:
-        List of todo items with id, title, completed status, priority, and optional due_date (YYYY-MM-DD or YYYY-MM-DD HH:MM)
+        List of todo items with id, title, completed status, priority, and optional due_date (YYYY-MM-DD with optional morning/afternoon/evening)
     """
     user_id = get_user_id(ctx)
     
@@ -102,7 +102,7 @@ def add_todos(ctx: Context, todo_items: List[Dict[str, Any]]) -> List[Dict[str, 
     Args:
         todo_items: List of todo items, each containing:
             - title: The title/description of the todo (required)
-            - due_date: Optional due date in format YYYY-MM-DD or YYYY-MM-DD HH:MM
+            - due_date: Optional due date in format "YYYY-MM-DD" or "YYYY-MM-DD morning/afternoon/evening"
             - priority: Optional priority level ('low', 'medium', 'high'), defaults to 'medium'
         
     Returns:
@@ -160,7 +160,7 @@ def update_todos(ctx: Context, updates: List[Dict[str, Any]]) -> List[Dict[str, 
             - todo_id: The ID of the todo to update (required)
             - title: New title (optional)
             - completed: New completion status (optional)
-            - due_date: New due date in format YYYY-MM-DD or YYYY-MM-DD HH:MM (optional)
+            - due_date: New due date in format "YYYY-MM-DD" or "YYYY-MM-DD morning/afternoon/evening" (optional)
             - priority: New priority level ('low', 'medium', 'high') (optional)
         
     Returns:
