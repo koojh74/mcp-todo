@@ -20,6 +20,9 @@ from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import jwt
 
+# from starlette.responses import Response
+from starlette.datastructures import URL
+
 from todo_mcp import mcp
 from database import user_db
 
@@ -46,13 +49,44 @@ app.add_middleware(
 )
 
 # mcp.run(transport="sse")
-app.mount("/mcp", mcp.sse_app())
+# app.mount("/mcp", mcp.sse_app())
+
+sse_app = mcp.sse_app()
+
+# 해당 mcp 가 authentication 이 필요하다고 알려주는 부분
+# 이게 없으면 자동연결을 하는데, 그러면 auth 없이 연결이 되어서 추후 동작에 문제가 생김
+@sse_app.middleware("http")
+async def mcp_auth_middleware(request: Request, call_next):
+    print('mcp_auth_middleware ---')
+    # print(f'request path: {request.url.path}')
+
+    # rewrite path manually to prevent redirect
+    if request.url.path == "/mcp/sse":
+        scope = request.scope
+        scope["path"] = "/mcp/sse/"
+        request._url = URL(scope=scope)  # Update cached URL
+        print("Manually rewrote path to /mcp/sse/ to avoid redirect")
+
+    # Authorization check
+    if request.url.path.endswith("/sse/"):
+        auth_header = request.headers.get("authorization")
+        print(f'auth: {auth_header}--')
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+
+    response = await call_next(request)
+    return response
+
+app.mount("/mcp", sse_app)
+
+# mcp.run(transport="sse")
+# app.mount("/mcp", mcp.sse_app())
 
 
 @app.get("/.well-known/oauth-authorization-server")
 def oauth_server(request: Request):
     # base_url = str(request.base_url).rstrip('/')
-    base_url = 'https://mcp-server-auth-google-822395763299.asia-northeast3.run.app'
+    base_url = 'https://mcp-todo-app-822395763299.asia-northeast3.run.app'
     return {
         "issuer": base_url,
         "authorization_endpoint": f"{base_url}/authorize",

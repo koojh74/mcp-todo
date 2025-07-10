@@ -2,9 +2,9 @@
 set -e
 
 # 변수 설정
-APP_NAME=mcp-server-auth-google
+APP_NAME=mcp-todo-app
 PROJECT_ID=loplat-ai
-REPO_NAME=my-repo
+REPO_NAME=my-repo-todo
 REGION=asia-northeast3
 IMAGE_URI=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${APP_NAME}:latest
 
@@ -30,3 +30,13 @@ gcloud run deploy ${APP_NAME} \
 
 echo "---------------------------"
 echo "배포 완료! Cloud Run에서 ${APP_NAME} 서비스를 확인하세요."
+
+# repo 생성
+# gcloud artifacts repositories create my-repo-todo \
+#   --repository-format=docker \
+#   --location=asia-northeast3 \
+#   --description="Foot traffic project container repo"
+
+# gcloud artifacts repositories delete my-repo-2 \
+#   --location=asia-northeast3 \
+#   --quiet
